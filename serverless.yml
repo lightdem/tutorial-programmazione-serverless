@@ -1,0 +1,65 @@
+service: MioProgettoServerless
+
+provider:
+  name: aws
+  runtime: python3.6
+  profile: profilo-tutorial
+
+  iamRoleStatements:
+    - Effect: "Allow"
+      Action:
+        - "S3:*"
+      Resource: "arn:aws:s3:::bucketlxp/*"
+    - Effect: "Allow"
+      Action:
+        - "dynamodb:PutItem"
+        - "dynamodb:GetItem"
+        - "dynamodb:BatchWriteItem"
+        - "dynamodb:Scan"
+        - "dynamodb:UpdateItem"
+        - "dynamodb:DescribeTable"
+      Resource: "arn:aws:dynamodb:us-east-1:*:table/conproblemi"
+
+
+functions:
+  hello:
+    handler: handler.hello
+
+  upload:
+    handler: handler.upload
+    events:
+      - http:
+          path: upload
+          method: post
+        
+  scan:
+    handler: handler.scan
+    events:
+      - s3:
+          bucket: bucketlxp
+          event: s3:ObjectCreated:*
+
+  auth:
+    handler: handler.prendi_righe_cattive
+    events:
+      - http:
+          path: prendi_righe_cattive
+          method: get
+
+
+
+resources:
+  Resources:
+    DBdeiCattivi:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: 'conproblemi'
+        KeySchema:
+          - AttributeName: riga
+            KeyType: HASH
+        AttributeDefinitions:
+          - AttributeName: riga
+            AttributeType: S
+        ProvisionedThroughput:
+          ReadCapacityUnits: 5
+          WriteCapacityUnits: 5
